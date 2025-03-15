@@ -5,3 +5,5 @@ sympy
 pykan
 torch
 tensorflow 
+transformers
+tokenizers
