@@ -15,12 +15,12 @@ VOCAB_SIZE = 512  # Matches your previous setup
 MAX_SEQ_LEN = 44  # Matches your previous setup
 PAD_IDX = 0  # Assuming 0 is the padding index, adjust if different
 DROPOUT = 0.1  # Default dropout from TP-Transformer
-FILTER_DIM = 2048  # Default filter dimension, adjust based on HyperParams
-N_LAYERS = 6  # Default number of layers, adjust as needed
-N_HEADS = 8  # Default number of heads, adjust as needed
-HIDDEN_DIM = 512  # Default hidden dimension, adjust as needed
+FILTER_DIM = 2048  
+N_LAYERS = 6  
+N_HEADS = 8  
+HIDDEN_DIM = 512
 
-# Define hyperparameters for TP-Transformer
+
 class HyperParams:
     def __init__(self):
         self.input_dim = VOCAB_SIZE
