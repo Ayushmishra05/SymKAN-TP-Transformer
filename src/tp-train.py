@@ -1,25 +1,26 @@
 import torch
 from torch.optim import AdamW
-from tptransformer import build_transformer # Assuming this is in a file named 'model.py'
+from kantptransformer import build_transformer  # Assuming this is in a file named 'tptransformer.py'
 import pickle
 import sys
 from tqdm import tqdm
 from torch.cuda.amp import GradScaler, autocast  # For mixed precision training
+from transformers import PreTrainedTokenizerFast  # For decoding the output
 
-# Hyperparameters (aligned with TP-Transformer and your previous setup)
+# Hyperparameters (aligned with TP-Transformer and your updated setup)
 EPOCHS = 5
 LEARNING_RATE = 5e-5
-BATCH_SIZE = 16
+BATCH_SIZE = 2  # Reduced from 16 to 2 due to memory constraints on CPU
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-VOCAB_SIZE = 512  # Matches your previous setup
-MAX_SEQ_LEN = 44  # Matches your previous setup
-PAD_IDX = 0  # Assuming 0 is the padding index, adjust if different
+VOCAB_SIZE = 512  # Matches your tokenizer's vocab_size
+MAX_LENGTH_TEXT = 509  # 99th percentile for text
+MAX_LENGTH_LABEL = 421  # Max length for label
+PAD_IDX = 0  # Matches the tokenizer's [PAD] token ID
 DROPOUT = 0.1  # Default dropout from TP-Transformer
-FILTER_DIM = 2048  
-N_LAYERS = 6  
-N_HEADS = 8  
+FILTER_DIM = 2048
+N_LAYERS = 6
+N_HEADS = 8
 HIDDEN_DIM = 512
-
 
 class HyperParams:
     def __init__(self):
@@ -34,8 +35,12 @@ params = HyperParams()
 
 def train_model():
     try:
+        # Load the tokenizer for decoding (needed for the forward pass)
+        tokenizer = PreTrainedTokenizerFast.from_pretrained("src/tokenizer/QED_tokenizer")
+        tokenizer.pad_token = tokenizer.eos_token if tokenizer.eos_token is not None else "[PAD]"
+
         # Initialize model and move to device
-        model = build_transformer(params, pad_idx=PAD_IDX)
+        model = build_transformer(params, pad_idx=PAD_IDX)  # Pass max_seq_len
         model.to(DEVICE)
         print(f"Model initialized on {DEVICE}")
 
@@ -51,6 +56,45 @@ def train_model():
             train_loader = pickle.load(f)
         with open(r'src/Dataloaders/val_loader.pkl', 'rb') as f:
             val_loader = pickle.load(f)
+
+        # Basic Forward Pass to Verify the Flow
+        print("\nPerforming a basic forward pass to verify the flow...")
+        model.eval()  # Set to evaluation mode for the forward pass
+        with torch.no_grad():
+            # Get a single batch from the train_loader
+            batch = next(iter(train_loader))
+            
+            # Determine batch structure (tuple or dictionary)
+            if isinstance(batch, (tuple, list)):
+                # Tuple format: (input_ids, attention_mask, labels)
+                input_ids = torch.clamp(batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)
+                labels = torch.clamp(batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)
+            elif isinstance(batch, dict):
+                # Dictionary format: {'input_ids': ..., 'labels': ...}
+                input_ids = torch.clamp(batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)
+                labels = torch.clamp(batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)
+            else:
+                raise ValueError(f"Unsupported batch format: {type(batch)}. Expected tuple/list or dict.")
+
+            # Verify input shapes
+            print(f"Input IDs shape: {input_ids.shape}")  # Should be [BATCH_SIZE, MAX_LENGTH_TEXT]
+            print(f"Labels shape: {labels.shape}")  # Should be [BATCH_SIZE, MAX_LENGTH_LABEL]
+
+            # Forward pass
+            output = model(input_ids, labels[:, :-1])  # Pass labels shifted left (excluding last token)
+            loss = loss_fn(output.reshape(-1, VOCAB_SIZE), labels[:, 1:].reshape(-1))  # Compare with shifted labels
+
+            print(f"Forward pass completed successfully!")
+            print(f"Loss: {loss.item()}")
+            print(f"Output shape: {output.shape}")  # Should be [BATCH_SIZE, MAX_LENGTH_LABEL-1, VOCAB_SIZE]
+
+            # Decode the predicted output (argmax over logits)
+            predicted_ids = torch.argmax(output, dim=-1)  # Shape: [BATCH_SIZE, MAX_LENGTH_LABEL-1]
+            predicted_label = tokenizer.decode(predicted_ids[0], skip_special_tokens=True)
+            true_label = tokenizer.decode(labels[0], skip_special_tokens=True)
+
+            print(f"Predicted label (decoded): {predicted_label}")
+            print(f"True label (decoded): {true_label}")
 
         # Training loop
         for epoch in range(EPOCHS):
@@ -106,8 +150,8 @@ def train_model():
                             val_input_ids = torch.clamp(val_batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)
                             val_labels = torch.clamp(val_batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)
                         elif isinstance(val_batch, dict):
-                            val_input_ids = torch.clamp(val_batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)
-                            val_labels = torch.clamp(val_batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)
+                            val_input_ids = torch.clamp(batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)
+                            val_labels = torch.clamp(batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)
                         else:
                             raise ValueError(f"Unsupported batch format: {type(val_batch)}. Expected tuple/list or dict.")
 

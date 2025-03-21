@@ -32,7 +32,7 @@ def debug(*args):
 def build_transformer(params, pad_idx):
   p = HyperParams()
   p.d_vocab = params.input_dim
-  p.d_pos = 200  # max input size
+  p.d_pos = 509  # max input size
 
   p.d_f = params.filter
 
@@ -53,7 +53,7 @@ def build_transformer(params, pad_idx):
   embedding = EmbeddingMultilinearSinusoidal(d_vocab=params.input_dim,
                                              d_x=p.d_x,
                                              dropout=params.dropout,
-                                             max_length=200)
+                                             max_length=509)
   encoder = Encoder(p=p)
   decoder = Decoder(p=p)
   model = Seq2Seq(p=p,
@@ -367,6 +367,8 @@ class Seq2Seq(nn.Module):
     self.decoder = decoder
     self.pad_idx = pad_idx
     self.p = p
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    self.to(self.device)
 
   def make_masks(self, src, trg):
     # src = [batch_size, src_seq_size]
@@ -427,30 +429,29 @@ class Seq2Seq(nn.Module):
 
     return trg_mask.to(trg.device)
 
-  def greedy_inference(model, src, sos_idx, eos_idx, max_length, device):
+  def greedy_inference(self, model, src, sos_idx, eos_idx, max_length):
     model.eval()
-    src = src.to(device)
+    src = src.to(model.device)
     src_mask = model.make_src_mask(src)
     src_emb = model.embedding(src)
 
     enc_src = model.encoder(src_emb, src_mask)
-    trg = torch.ones(src.shape[0], 1).fill_(sos_idx).type_as(src).to(device)
+    trg = torch.ones(src.shape[0], 1).fill_(sos_idx).type_as(src).to(model.device)
 
-    done = torch.zeros(src.shape[0]).type(torch.uint8).to(device)
+    done = torch.zeros(src.shape[0], dtype=torch.uint8).to(model.device)
     for _ in range(max_length):
-      trg_emb = model.embedding(trg)
-      trg_mask = model.make_trg_mask(trg)
+        trg_emb = model.embedding(trg)
+        trg_mask = model.make_trg_mask(trg)
 
-      output = model.decoder(src=enc_src, trg=trg_emb,
-                             src_mask=src_mask, trg_mask=trg_mask)
-      logits = model.embedding.transpose_forward(output)
-      pred = torch.argmax(logits[:,[-1],:], dim=-1)
-      trg = torch.cat([trg, pred], dim=1)
+        output = model.decoder(src=enc_src, trg=trg_emb, src_mask=src_mask, trg_mask=trg_mask)
+        logits = model.embedding.transpose_forward(output)
+        pred = torch.argmax(logits[:, [-1], :], dim=-1)
+        trg = torch.cat([trg, pred], dim=1)
 
-      eos_match = (pred.squeeze(1) == eos_idx)
-      done = done | eos_match
+        eos_match = (pred.squeeze(1) == eos_idx)
+        done = done | eos_match
 
-      if done.sum() == src.shape[0]:
-        break
+        if done.sum() == src.shape[0]:
+            break
 
     return trg
