@@ -1,0 +1,9 @@
+pandas 
+numpy 
+scikit-learn 
+sympy 
+pykan
+torch
+tensorflow 
+transformers
+tokenizers
