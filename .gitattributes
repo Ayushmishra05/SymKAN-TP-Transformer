@@ -1,2 +1,4 @@
 *.pth filter=lfs diff=lfs merge=lfs -text
 *.pkl filter=lfs diff=lfs merge=lfs -text
+src/Dataloaders/train_loader.pkl filter=lfs diff=lfs merge=lfs -text
+src/Dataloaders/val_loader.pkl filter=lfs diff=lfs merge=lfs -text
