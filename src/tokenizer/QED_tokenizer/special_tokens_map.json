@@ -1,6 +1,0 @@
-{
-  "cls_token": "[CLS]",
-  "mask_token": "[STATE_ID]",
-  "pad_token": "[PAD]",
-  "sep_token": "[SEP]"
-}
