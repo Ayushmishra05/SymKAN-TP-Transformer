@@ -1,4 +1,4 @@
-# Decoder KAN (Kolmogorov-Arnold Networks)
+# SymKAN-TP-Transformer (Tensor-Product Transformer combined with KAN and Sympy)
 
 ## Task 1 :  Extracting the Data From the sources 
 Starting off with the Data Extraction part, The Data was collected from the listed source, the data was in the Raw Text format, the first task was to convert this Raw text data into a CSV formatted dataset
@@ -19,7 +19,7 @@ the Transformer model was trained on the dataset, initially the plan was to use 
 * This Transformer architecture is the same as, which is provided in the paper, Now for comparison a basic Transformer was built to train on the dataset, the dataset consisted of 15K Rows, which was provided, by the org
 * After training the Transformers for 10 epochs, the Accuracy came out to be 99.5%, Now the task was to improve it and also bring the interpretability here 
 
-## Approach - SymKAN-TPT (Tensor-Product Transformer combined with KAN and Sympy)
+## Task 3.1 - Approach - SymKAN-TPT (Tensor-Product Transformer combined with KAN and Sympy)
  ### Why this Approach 
 * The Last Approach for the Same Problem Introduced a KAN Layer with Transformer Architecture, which resulted in Promising Accuracy 
 * This Approach is Inspired from the Last Approach, We utilise KAN Layer with TP-Transformer Further Evaluated by Sympy Layer 
@@ -68,6 +68,18 @@ Encoding for Math Problem Solving </a>**
       * Both models share the 𝑂(𝑁^2⋅𝑑𝑥) attention bottleneck, but the TP-Transformer’s additional role-related operations increase the constant factors, making each layer slower.
 
       *  Overall The Memory Requirements of Tp-Transformer is More compared to Standard Transformer, but this is often considered as a **Trade-off** between the **Memory and the Performance** 
-      
+
+## Results
+
+
+
+
+
+
+## References 
+
+
+
+
 
 
