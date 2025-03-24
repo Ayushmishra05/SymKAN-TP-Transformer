@@ -1,6 +1,6 @@
 import torch
 from torch.optim import AdamW
-from kantptransformer import build_transformer  , KANLayer
+from kantptransformer import build_transformer, KANLayer
 import pickle
 import sys
 import time  # For timing each batch
@@ -144,19 +144,20 @@ class SymPyLayer:
 # Hyperparameters (aligned with TP-Transformer and your previous setup)
 EPOCHS = 5
 LEARNING_RATE = 5e-5
-BATCH_SIZE = 2 # Reduced to speed up training on CPU
-GRADIENT_ACCUMULATION_STEPS = 2# Adjusted to maintain effective batch size
-EFFECTIVE_BATCH_SIZE = BATCH_SIZE * GRADIENT_ACCUMULATION_STEPS  # 16
+BATCH_SIZE = 2  # Reduced to speed up training on CPU
+GRADIENT_ACCUMULATION_STEPS = 2  # Adjusted to maintain effective batch size
+EFFECTIVE_BATCH_SIZE = BATCH_SIZE * GRADIENT_ACCUMULATION_STEPS  # 4
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 VOCAB_SIZE = 512  # Matches your tokenizer's vocab_size
-MAX_LENGTH_TEXT = 509 # Reduced from 509 to speed up training
-MAX_LENGTH_LABEL = 412 # Reduced from 412 to speed up training
+MAX_LENGTH_TEXT = 509  # Updated to full sequence length
+MAX_LENGTH_LABEL = 412  # Updated to full sequence length
 PAD_IDX = 0  # Matches the tokenizer's [PAD] token ID
 DROPOUT = 0.1  # Default dropout from TP-Transformer
 FILTER_DIM = 2048
 N_LAYERS = 6
 N_HEADS = 8
 HIDDEN_DIM = 512
+LAMBDA_L2 = 1e-5  # Added: L2 regularization strength for KAN layers
 
 class HyperParams:
     def __init__(self):
@@ -168,6 +169,28 @@ class HyperParams:
         self.dropout = DROPOUT
 
 params = HyperParams()
+
+def augment_expression(expr_str):
+    """
+    Augment a HEP expression by reordering commutative terms (e.g., a + b -> b + a).
+    This is a simple example; you can expand it based on HEP-specific rules.
+    Args:
+        expr_str (str): The expression string to augment.
+    Returns:
+        str: Augmented expression string.
+    """
+    try:
+        # Split the expression into terms based on '+' (assuming addition is commutative)
+        terms = expr_str.split('+')
+        if len(terms) > 1:
+            # Reverse the order of terms (simple augmentation)
+            augmented_terms = terms[::-1]
+            augmented_expr = '+'.join(augmented_terms)
+            return augmented_expr
+        return expr_str
+    except Exception as e:
+        print(f"Failed to augment expression {expr_str}: {e}")
+        return expr_str
 
 def train_model():
     try:
@@ -187,7 +210,7 @@ def train_model():
 
         # Warn if running on CPU
         if DEVICE.type == "cpu":
-            print("WARNING: Running on CPU. Training may be slow. Sequence lengths reduced to 200 to speed up training.")
+            print("WARNING: Running on CPU. Training may be slow. Consider using a GPU for full sequence length (509).")
 
         # Optimizer and loss function (cross-entropy for token classification)
         optimizer = AdamW(model.parameters(), lr=LEARNING_RATE)
@@ -211,11 +234,11 @@ def train_model():
             
             # Determine batch structure (tuple or dictionary)
             if isinstance(batch, (tuple, list)):
-                input_ids = torch.clamp(batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_TEXT]
-                labels = torch.clamp(batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_LABEL]
+                input_ids = torch.clamp(batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
+                labels = torch.clamp(batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
             elif isinstance(batch, dict):
-                input_ids = torch.clamp(batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_TEXT]
-                labels = torch.clamp(batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_LABEL]
+                input_ids = torch.clamp(batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
+                labels = torch.clamp(batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
             else:
                 raise ValueError(f"Unsupported batch format: {type(batch)}. Expected tuple/list or dict.")
 
@@ -275,11 +298,11 @@ def train_model():
 
                     # Determine batch structure (tuple or dictionary)
                     if isinstance(batch, (tuple, list)):
-                        input_ids = torch.clamp(batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_TEXT]
-                        labels = torch.clamp(batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_LABEL]
+                        input_ids = torch.clamp(batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
+                        labels = torch.clamp(batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
                     elif isinstance(batch, dict):
-                        input_ids = torch.clamp(batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_TEXT]
-                        labels = torch.clamp(batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_LABEL]
+                        input_ids = torch.clamp(batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
+                        labels = torch.clamp(batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
                     else:
                         raise ValueError(f"Unsupported batch format: {type(batch)}. Expected tuple/list or dict.")
 
@@ -288,13 +311,26 @@ def train_model():
                         logits = model(input_ids, labels[:, :-1])  # Shape: [batch_size, seq_len, vocab_size]
                         loss = loss_fn(logits.reshape(-1, VOCAB_SIZE), labels[:, 1:].reshape(-1))
 
-                    loss = loss / GRADIENT_ACCUMULATION_STEPS  # Scale the loss for accumulation
+                        # Add L2 regularization from all KAN layers
+                        l2_reg = 0
+                        # KAN layer at the output stage
+                        l2_reg += model.kan_layer.get_l2_regularization()
+                        # KAN layers in the encoder
+                        for layer in model.encoder.layers:
+                            l2_reg += layer.densefilter.get_l2_regularization()
+                        # KAN layers in the decoder
+                        for layer in model.decoder.layers:
+                            l2_reg += layer.densefilter.get_l2_regularization()
+                        # Add L2 regularization to the loss
+                        total_loss_batch = loss + LAMBDA_L2 * l2_reg
+
+                    total_loss_batch = total_loss_batch / GRADIENT_ACCUMULATION_STEPS  # Scale the loss for accumulation
 
                     # Backward pass
                     if DEVICE.type == "cuda":
-                        scaler.scale(loss).backward()
+                        scaler.scale(total_loss_batch).backward()
                     else:
-                        loss.backward()
+                        total_loss_batch.backward()
 
                     step += 1
                     if step % GRADIENT_ACCUMULATION_STEPS == 0:
@@ -310,7 +346,7 @@ def train_model():
                         step = 0  # Reset step counter
 
                     total_loss += loss.item() * GRADIENT_ACCUMULATION_STEPS  # Unscale the loss for logging
-                    progress_bar.set_postfix({'loss': f'{loss.item() * GRADIENT_ACCUMULATION_STEPS:.4f}'})
+                    progress_bar.set_postfix({'loss': f'{loss.item() * GRADIENT_ACCUMULATION_STEPS:.4f}', 'l2_reg': f'{l2_reg.item():.4f}'})
 
                     # SymPy formalization (every 100 batches to avoid slowdown)
                     if (batch_idx + 1) % 100 == 0:
@@ -354,11 +390,11 @@ def train_model():
                     for val_batch in val_loader:
                         # Determine batch structure
                         if isinstance(val_batch, (tuple, list)):
-                            val_input_ids = torch.clamp(val_batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_TEXT]
-                            val_labels = torch.clamp(val_batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_LABEL]
+                            val_input_ids = torch.clamp(val_batch[0], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
+                            val_labels = torch.clamp(val_batch[2], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
                         elif isinstance(val_batch, dict):
-                            val_input_ids = torch.clamp(val_batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_TEXT]
-                            val_labels = torch.clamp(val_batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)[:, :MAX_LENGTH_LABEL]
+                            val_input_ids = torch.clamp(val_batch['input_ids'], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
+                            val_labels = torch.clamp(val_batch['labels'], 0, VOCAB_SIZE - 1).to(DEVICE)  # Removed clamping to 200
                         else:
                             raise ValueError(f"Unsupported batch format: {type(val_batch)}. Expected tuple/list or dict.")
 

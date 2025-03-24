@@ -99,9 +99,8 @@ class EncoderLayer(nn.Module):
     self.dropout1 = nn.Dropout(p.dropout)
     # sublayer 2
     self.layernorm2 = nn.LayerNorm(d_h)
-    self.densefilter = PositionwiseFeedforward(hid_dim=d_h,
-                                               pf_dim=p.d_f,
-                                               dropout=p.dropout)
+    # Replace PositionwiseFeedforward with KANLayer
+    self.densefilter = KANLayer(in_dim=d_h, out_dim=d_h, num_knots=5, spline_order=3)
     self.dropout2 = nn.Dropout(p.dropout)
     # output
     self.layernorm3 = nn.LayerNorm(d_h)
@@ -262,34 +261,6 @@ class SelfAttention(nn.Module):
                     std=1./math.sqrt(self.p.d_r))
 
 
-class PositionwiseFeedforward(nn.Module):
-  def __init__(self, hid_dim, pf_dim, dropout):
-    super().__init__()
-
-    self.hid_dim = hid_dim
-    self.pf_dim = pf_dim
-
-    self.linear1 = nn.Linear(hid_dim, pf_dim)
-    self.linear2 = nn.Linear(pf_dim, hid_dim)
-    self.dropout = nn.Dropout(dropout)
-
-    self.reset_parameters()
-
-  def forward(self, x):
-    # x = [batch_size, seq_size, hid_dim]
-
-    x = self.linear1(x)
-    x = self.dropout(F.relu(x))
-    x = self.linear2(x)
-
-    # x = [batch_size, seq_size, hid_dim]
-    return x
-
-  def reset_parameters(self):
-    nn.init.xavier_uniform_(self.linear1.weight)
-    nn.init.xavier_uniform_(self.linear2.weight)
-
-
 class Decoder(nn.Module):
   def __init__(self, p):
     super().__init__()
@@ -322,14 +293,12 @@ class DecoderLayer(nn.Module):
     self.dropout2 = nn.Dropout(p.dropout)
     # sublayer 3
     self.layernorm3 = nn.LayerNorm(d_h)
-    self.densefilter = PositionwiseFeedforward(hid_dim=d_h,
-                                               pf_dim=p.d_f,
-                                               dropout=p.dropout)
+    # Replace PositionwiseFeedforward with KANLayer
+    self.densefilter = KANLayer(in_dim=d_h, out_dim=d_h, num_knots=5, spline_order=3)
     self.dropout3 = nn.Dropout(p.dropout)
 
     # output
     self.layernorm4 = nn.LayerNorm(d_h)
-
 
   def forward(self, trg, src, trg_mask, src_mask):
     # trg = [batch_size, trg_seq_size, hid_dim]
@@ -386,7 +355,6 @@ class Seq2Seq(nn.Module):
         trg = self.embedding(trg)
         enc_src = self.encoder(src, src_mask)
         out = self.decoder(trg, enc_src, trg_mask, src_mask)
-        # Replace transpose_forward with KAN layer
         logits = self.kan_layer(out)  # [batch_size, trg_seq_size, d_vocab]
         return logits
 
@@ -414,7 +382,6 @@ class Seq2Seq(nn.Module):
             trg_emb = model.embedding(trg)
             trg_mask = model.make_trg_mask(trg)
             output = model.decoder(src=enc_src, trg=trg_emb, src_mask=src_mask, trg_mask=trg_mask)
-            # Replace transpose_forward with KAN layer
             logits = model.kan_layer(output)  # [batch_size, trg_seq_size, d_vocab]
             pred = torch.argmax(logits[:, [-1], :], dim=-1)
             trg = torch.cat([trg, pred], dim=1)
@@ -435,7 +402,7 @@ class Seq2Seq(nn.Module):
             out = self.decoder(trg, enc_src, trg_mask, src_mask)
             interpretability_info = self.kan_layer.get_interpretability(out)
         return interpretability_info
-  
+
 
 class KANLayer(nn.Module):
     def __init__(self, in_dim, out_dim, num_knots=5, spline_order=3):
@@ -461,21 +428,16 @@ class KANLayer(nn.Module):
 
     def bspline_basis(self, x, knot_idx, order):
         """Compute B-spline basis function recursively."""
-        # Base case for order 0
         if order == 0:
-            # Ensure knot_idx + 1 is within bounds
             if knot_idx + 1 >= len(self.knots):
                 return torch.zeros_like(x)
             return ((self.knots[knot_idx] <= x) & (x < self.knots[knot_idx + 1])).float()
         
-        # Recursive case
         left_term = 0
         right_term = 0
-        # Left term
         if knot_idx + order < len(self.knots) and self.knots[knot_idx + order] != self.knots[knot_idx]:
             left_term = ((x - self.knots[knot_idx]) / (self.knots[knot_idx + order] - self.knots[knot_idx])) * \
                         self.bspline_basis(x, knot_idx, order - 1)
-        # Right term
         if knot_idx + order + 1 < len(self.knots) and self.knots[knot_idx + order + 1] != self.knots[knot_idx + 1]:
             right_term = ((self.knots[knot_idx + order + 1] - x) / (self.knots[knot_idx + order + 1] - self.knots[knot_idx + 1])) * \
                          self.bspline_basis(x, knot_idx + 1, order - 1)
@@ -494,7 +456,7 @@ class KANLayer(nn.Module):
         for i in range(self.in_dim):
             x_i = x[:, :, i]
             basis_values = torch.zeros(batch_size, seq_len, self.num_knots, device=x.device)
-            for k in range(self.num_knots - self.spline_order):  # Adjust loop bounds
+            for k in range(self.num_knots - self.spline_order):
                 basis_values[:, :, k] = self.bspline_basis(x_i, k, self.spline_order)
             inner_outputs[:, :, i] = (basis_values * self.inner_coeffs[i]).sum(dim=-1)
 
@@ -528,3 +490,9 @@ class KANLayer(nn.Module):
             "inner_outputs": inner_outputs,  # Contribution of each input feature
             "contributions": contributions   # Contribution to each output class
         }
+
+    def get_l2_regularization(self):
+        """Compute L2 regularization term for inner_coeffs and outer_coeffs."""
+        l2_inner = torch.norm(self.inner_coeffs, p=2) ** 2
+        l2_outer = torch.norm(self.outer_coeffs, p=2) ** 2
+        return l2_inner + l2_outer
