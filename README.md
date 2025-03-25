@@ -1,5 +1,55 @@
 # SymKAN-TP-Transformer (Tensor-Product Transformer combined with KAN and Sympy)
 
+## Project Structure 
+```
+.
+├── LICENSE
+├── QED_data
+│   ├── QED_data.txt
+│   ├── processed_2.csv
+│   ├── processed_dataset.csv
+│   ├── unique_tokens.txt
+│   └── vocab.pkl
+├── README.md
+├── __init__.py
+├── extract_and_tokenize
+│   ├── QED_tokenizer.ipynb
+│   ├── extract_and_tokenize_dataset.ipynb
+│   ├── extract_unique_tokens.ipynb
+│   └── vocab_build.ipynb
+├── requirements.txt
+├── src
+│   ├── Dataloaders
+│   │   ├── test_loader.pkl
+│   │   ├── train_loader.pkl
+│   │   └── val_loader.pkl
+│   ├── KAN_TP_Transformer.py
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── data_tokeinize.cpython-312.pyc
+│   │   ├── kantptransformer.cpython-312.pyc
+│   │   ├── model.cpython-312.pyc
+│   │   └── tptransformer.cpython-312.pyc
+│   ├── get_config.py
+│   ├── tokenizer
+│   │   └── QED_tokenizer
+│   │       ├── special_tokens_map.json
+│   │       ├── tokenizer.json
+│   │       └── tokenizer_config.json
+│   ├── tptransformer.py
+│   ├── transformer.py
+│   └── utils
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-312.pyc
+│       │   └── lib.cpython-312.pyc
+│       └── lib.py
+└── train
+    ├── kantptrain.py
+    └── train.py
+```
+
 ## Task 1 :  Extracting the Data From the sources 
 Starting off with the Data Extraction part, The Data was collected from the listed source, the data was in the Raw Text format, the first task was to convert this Raw text data into a CSV formatted dataset
 * I have used re (python module), which is python module for regular expressions 
@@ -68,18 +118,6 @@ Encoding for Math Problem Solving </a>**
       * Both models share the 𝑂(𝑁^2⋅𝑑𝑥) attention bottleneck, but the TP-Transformer’s additional role-related operations increase the constant factors, making each layer slower.
 
       *  Overall The Memory Requirements of Tp-Transformer is More compared to Standard Transformer, but this is often considered as a **Trade-off** between the **Memory and the Performance** 
-
-## Results
-
-
-
-
-
-
-## References 
-
-
-
 
 
 

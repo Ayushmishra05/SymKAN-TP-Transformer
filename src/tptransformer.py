@@ -1,8 +1,3 @@
-# TP-Transformer
-# See https://arxiv.org/abs/1910.06611
-# See *github link to readme*
-#
-#
 import math
 
 import torch
@@ -11,7 +6,7 @@ import torch.nn.functional as F
 
 from utils.lib import HyperParams
 
-LOG_TERMINAL = False  # slow down if enabled
+LOG_TERMINAL = False 
 
 def is_nan_string(x):
   if not LOG_TERMINAL:
@@ -39,14 +34,14 @@ def build_transformer(params, pad_idx):
   p.n_L = params.n_layers
   p.n_I = params.n_heads
 
-  p.d_x = params.hidden  # token embedding dimension
-  p.d_p = params.hidden  # position embedding dimension
+  p.d_x = params.hidden  
+  p.d_p = params.hidden  
 
-  p.d_v = p.d_x // p.n_I  # value dimension
-  p.d_r = p.d_x // p.n_I  # role dimension
+  p.d_v = p.d_x // p.n_I 
+  p.d_r = p.d_x // p.n_I  
 
-  p.d_k = p.d_x // p.n_I  # key dimension
-  p.d_q = p.d_x // p.n_I  # query dimension
+  p.d_k = p.d_x // p.n_I  
+  p.d_q = p.d_x // p.n_I 
 
   p.dropout = params.dropout
 
@@ -75,8 +70,6 @@ class Encoder(nn.Module):
     self.layers = nn.ModuleList(layers)
 
   def forward(self, src, src_mask):
-    # src = [batch_size, src_seq_len]
-    # src_mask = [batch_size, 1, attn_size]
     debug("\nencoder")
     debug("src: ", src.shape, is_nan_string(src))
     debug("src_mask: ", src_mask.shape, is_nan_string(src_mask))
@@ -90,7 +83,6 @@ class Encoder(nn.Module):
 class EncoderLayer(nn.Module):
   def __init__(self, p):
     super().__init__()
-    # d_in list of input dimension of z e.g. [p.d_x, p.d_p] or [p.d_v, p.d_r]
     d_h = p.d_x
 
     # sublayer 1
@@ -164,18 +156,14 @@ class EmbeddingMultilinearSinusoidal(nn.Module):
     # x = [batch_size, src_seq_len, d_x]
 
     r = self.linear(x) + 1  # such that initially ~N(1,1)
-    # r = [batch_size, src_seq_len, d_r]
 
     z = x * r
     z = self.dropout(z)
-    # src = [batch_size, src_seq_len, d_x*d_r]
     return z
 
   def transpose_forward(self, trg):
-    # trg = [batch_size, trg_seq_len, d_v, d_r]
 
     logits = torch.matmul(trg, torch.transpose(self.tok_embedding.weight, 0, 1))
-    # logits = [batch_size, trg_seq_len, d_vocab
     return logits
 
   def reset_parameters(self):
