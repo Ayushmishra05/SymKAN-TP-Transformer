@@ -106,7 +106,7 @@ Encoding for Math Problem Solving </a>**
   * This symbolic comparison is far more robust than token-level matching, as it verifies the underlying mathematical structure rather than just surface-level syntax. this ensures the model’s outputs are not only correct but also meaningful. 
 
 
-### (Current  Status  : Still in Developement) 
+ 
 
 ## What about the Complexity ?
 
@@ -119,5 +119,5 @@ Encoding for Math Problem Solving </a>**
 
       *  Overall The Memory Requirements of Tp-Transformer is More compared to Standard Transformer, but this is often considered as a **Trade-off** between the **Memory and the Performance** 
 
-
+## Project Status : (Still in Developemt)
 
