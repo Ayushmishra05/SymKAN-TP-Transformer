@@ -121,3 +121,4 @@ Encoding for Math Problem Solving </a>**
 
 ## Project Status : (Still in Developemt)
 
+"-1/2*i*e^2*gamma_{+%\sigma_165,%gam_145,%gam_146}*gamma_{%\sigma_165,%gam_147,%del_137}*e_{i_3,%gam_146}(p_1)_u*e_{k_3,%del_137}(p_2)_u*e_{l_3,%gam_145}(p_3)_u^(*)*e_{i_5,%gam_147}(p_4)_u^(*)/(m_e^2 + -s_13 + 1/2*reg_prop)",2*e^4*(m_e^4 + -1/2*m_e^2*s_13 + 1/2*s_14*s_23 + -1/2*m_e^2*s_24 + 1/2*s_12*s_34)*(m_e^2 + -s_13 + 1/2*reg_prop)^(-2)
