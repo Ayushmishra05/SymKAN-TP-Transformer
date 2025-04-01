@@ -5,18 +5,22 @@
 .
 ├── LICENSE
 ├── QED_data
-│   ├── QED_data.txt
-│   ├── processed_2.csv
-│   ├── processed_dataset.csv
-│   ├── unique_tokens.txt
-│   └── vocab.pkl
+│   ├── normalized_data.csv
+│   ├── preprocessed_data.csv
+│   ├── raw_data.txt
+│   ├── test_data.csv
+│   ├── train_data.csv
+│   └── val_data.csv
 ├── README.md
 ├── __init__.py
-├── extract_and_tokenize
+├── experiments
 │   ├── QED_tokenizer.ipynb
 │   ├── extract_and_tokenize_dataset.ipynb
 │   ├── extract_unique_tokens.ipynb
 │   └── vocab_build.ipynb
+├── notebooks
+│   ├── preprocess.ipynb
+│   └── tokenize.ipynb
 ├── requirements.txt
 ├── src
 │   ├── Dataloaders
@@ -25,18 +29,8 @@
 │   │   └── val_loader.pkl
 │   ├── KAN_TP_Transformer.py
 │   ├── __init__.py
-│   ├── __pycache__
-│   │   ├── __init__.cpython-312.pyc
-│   │   ├── data_tokeinize.cpython-312.pyc
-│   │   ├── kantptransformer.cpython-312.pyc
-│   │   ├── model.cpython-312.pyc
-│   │   └── tptransformer.cpython-312.pyc
 │   ├── get_config.py
-│   ├── tokenizer
-│   │   └── QED_tokenizer
-│   │       ├── special_tokens_map.json
-│   │       ├── tokenizer.json
-│   │       └── tokenizer_config.json
+│   ├── tokenize.py
 │   ├── tptransformer.py
 │   ├── transformer.py
 │   └── utils
