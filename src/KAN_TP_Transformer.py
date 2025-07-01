@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.lib import HyperParams
+from src.utils.lib import HyperParams
 
 LOG_TERMINAL = False  # slow down if enabled
 

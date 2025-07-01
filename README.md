@@ -115,3 +115,34 @@ Encoding for Math Problem Solving </a>**
 
 ## Project Status : (Still in Developemt)
 
+
+So this expression eventually gets tokenized like this 
+
+# Ritesh's Tokenizer 
+
+Expr: 1/9*i*e^2*gamma_{+\INDEX_0,INDEX_1,INDEX_2}*gamma_{\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)
+
+Tokens: ['1', '/', '9', '*', 'i', '*', 'e', '^', '2', '*', 'gamma_{', '+', '\\', 'INDEX_0', ',', 'INDEX_1', ',', 'INDEX_2', '}', '*', 'gamma_{', '\\', 'INDEX_0', ',', 'INDEX_3', ',', 'INDEX_4', '}', '*', 'b_{', 'MOMENTUM_0', ',', 'INDEX_4', '}', '(', 'MOMENTUM_3', ')', '_v', '*', 'b_{', 'MOMENTUM_1', ',', 'INDEX_3', '}', '(', 'MOMENTUM_4', ')', '_u', '^', 'CONJ', '*', 'c_{', 'MOMENTUM_2', ',', 'INDEX_2', '}', '(', 'MOMENTUM_1', ')', '_u', '*', 'c_{', 'MOMENTUM_3', ',', 'INDEX_1', '}', '(', 'MOMENTUM_2', ')', '_v', '^', 'CONJ', '/', '(', 'm_c', '^', '2', '+', 'MOMENTUM_12', '+', '1', '/', '2', '*', 'reg_prop', ')']
+
+
+
+Expression: 1/81*e^4*(16*m_b^2*m_c^2 + 8*m_b^2*s_12 + 8*s_14*s_23 + 8*s_13*s_24 + 8*m_c^2*s_34)*(m_c^2 + s_12 + 1/2*reg_prop)^(-2)
+
+Tokens: ['1', '/', '81', '*', 'e', '^', '4', '*', '(', '16', '*', 'm_b', '^', '2', '*', 'm_c', '^', '2', '+', '8', '*', 'm_b', '^', '2', '*', 'MOMENTUM_12', '+', '8', '*', 'MOMENTUM_14', '*', 'MOMENTUM_23', '+', '8', '*', 'MOMENTUM_13', '*', 'MOMENTUM_24', '+', '8', '*', 'm_c', '^', '2', '*', 'MOMENTUM_34', ')', '*', '(', 'm_c', '^', '2', '+', 'MOMENTUM_12', '+', '1', '/', '2', '*', 'reg_prop', ')', '^', '(', '-', '2', ')']
+
+
+# AST Based Tokenizer capturing field and gamma terms as a single token  
+
+
+Expr: 1/9*i*e^2*gamma_{+\INDEX_0,INDEX_1,INDEX_2}*gamma_{\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)
+
+
+Tokens: ['1', '/', '9', '*', 'I_UNIT', '*', 'e', '^', '2', '*', 'gamma_{+\\INDEX_0,INDEX_1,INDEX_2}', '*', 'gamma_{\\INDEX_0,INDEX_3,INDEX_4}', '*', 'b_{MOMENTUM_0,INDEX_4}', '(', 'P_3', ')', '_v', '*', 'b_{MOMENTUM_1,INDEX_3}', '(', 'P_4', ')', '_u', '^', 'CONJ', '*', 'c_{MOMENTUM_2,INDEX_2}', '(', 'P_1', ')', '_u', '*', 'c_{MOMENTUM_3,INDEX_1}', '(', 'P_2', ')', '_v', '^', 'CONJ', '/', '(', 'm_c', '^', '2', '+', 'MANDELSTAM_12', '+', '1', '/', '2', '*', 'REG_PROP', ')']
+
+
+# AST Based Tokenizer breaking down gamma and field terms seperately 
+
+
+Expr: 1/9*i*e^2*gamma_{+\INDEX_0,INDEX_1,INDEX_2}*gamma_{\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)
+
+Tokens: ['1', '/', '9', '*', 'I_UNIT', '*', 'E_CHARGE', '^', '2', '*', 'gamma_', '{', '+', '\\', 'INDEX_0', ',', 'INDEX_1', ',', 'INDEX_2', '}', '*', 'gamma_', '{', '\\', 'INDEX_0', ',', 'INDEX_3', ',', 'INDEX_4', '}', '*', 'b_', '{', 'MOMENTUM_0', ',', 'INDEX_4', '}', '(', 'P_3', ')', '_', 'v', '*', 'b_', '{', 'MOMENTUM_1', ',', 'INDEX_3', '}', '(', 'P_4', ')', '_', 'u', '^', 'CONJ', '*', 'c_', '{', 'MOMENTUM_2', ',', 'INDEX_2', '}', '(', 'P_1', ')', '_', 'u', '*', 'c_', '{', 'MOMENTUM_3', ',', 'INDEX_1', '}', '(', 'P_2', ')', '_', 'v', '^', 'CONJ', '/', '(', 'MASS_c', '^', '2', '+', 'MANDELSTAM_12', '+', '1', '/', '2', '*', 'reg_prop', ')']
