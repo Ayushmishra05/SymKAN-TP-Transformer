@@ -1,47 +1,41 @@
-# SymKAN-TP-Transformer (Tensor-Product Transformer combined with KAN and Sympy)
+# SymKAN-TP-Transformer (Tensor-Product Transformer combined with SineKAN and Sympy)
+
+This Repository is part of SYMBA Project under GSoC 2025 Program
 
 ## Project Structure 
 ```
 .
 ├── LICENSE
-├── QED_data
-│   ├── normalized_data.csv
-│   ├── preprocessed_data.csv
-│   ├── raw_data.txt
-│   ├── test_data.csv
-│   ├── train_data.csv
-│   └── val_data.csv
 ├── README.md
-├── __init__.py
-├── experiments
-│   ├── QED_tokenizer.ipynb
-│   ├── extract_and_tokenize_dataset.ipynb
-│   ├── extract_unique_tokens.ipynb
-│   └── vocab_build.ipynb
 ├── notebooks
 │   ├── preprocess.ipynb
-│   └── tokenize.ipynb
+│   ├── sym_kan_transformer.ipynb
+│   ├── tokenizer.ipynb
+│   └── vanilla_transformer.ipynb
+├── preprocess
+│   ├── __init__.py
+│   └── tokenizersplit.py
 ├── requirements.txt
 ├── src
-│   ├── Dataloaders
-│   │   ├── test_loader.pkl
-│   │   ├── train_loader.pkl
-│   │   └── val_loader.pkl
-│   ├── KAN_TP_Transformer.py
 │   ├── __init__.py
-│   ├── get_config.py
-│   ├── tokenize.py
-│   ├── tptransformer.py
-│   ├── transformer.py
-│   └── utils
-│       ├── __init__.py
-│       ├── __pycache__
-│       │   ├── __init__.cpython-312.pyc
-│       │   └── lib.cpython-312.pyc
-│       └── lib.py
-└── train
-    ├── kantptrain.py
-    └── train.py
+│   ├── sym_kan_transformer
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── build_model.cpython-312.pyc
+│   │   │   ├── config.cpython-312.pyc
+│   │   │   ├── model.cpython-312.pyc
+│   │   │   ├── tokenizer.cpython-312.pyc
+│   │   │   └── train.cpython-312.pyc
+│   │   ├── build_model.py
+│   │   ├── config.py
+│   │   ├── model.py
+│   │   ├── tokenizer.py
+│   │   └── train.py
+│   └── transformer
+│       ├── train.py
+│       └── vanilla_transformer.py
+└── train_sym_kan_transformer.py
+
 ```
 
 ## Task 1 :  Extracting the Data From the sources 
@@ -58,15 +52,15 @@ The Tokenization technique used here was
 
 
 ## Task 3 : Transformer 
-the Transformer model was trained on the dataset, initially the plan was to use the Decoder Architecture, with the KAN layers, but because Decoders only works in language tasks, i cancelled the plan of training Decoder 
+the Transformer model was trained on the dataset, initially the plan was to use the Decoder Architecture, with the SineKAN layers, but because Decoders only works in language tasks, i cancelled the plan of training Decoder 
 
 * This Transformer architecture is the same as, which is provided in the paper, Now for comparison a basic Transformer was built to train on the dataset, the dataset consisted of 15K Rows, which was provided, by the org
 * After training the Transformers for 10 epochs, the Accuracy came out to be 99.5%, Now the task was to improve it and also bring the interpretability here 
 
 ## Task 3.1 - Approach - SymKAN-TPT (Tensor-Product Transformer combined with KAN and Sympy)
  ### Why this Approach 
-* The Last Approach for the Same Problem Introduced a KAN Layer with Transformer Architecture, which resulted in Promising Accuracy 
-* This Approach is Inspired from the Last Approach, We utilise KAN Layer with TP-Transformer Further Evaluated by Sympy Layer 
+* The Last Approach for the Same Problem Introduced a SineKAN Layer with Transformer Architecture, which resulted in Promising Accuracy 
+* This Approach is Inspired from the Last Approach, We utilise SineKAN Layer with TP-Transformer Further Evaluated by Sympy Layer 
   
   ### Why Choose TP-Transformer ? 
    * Unlike the **standard Transformer**, which simply adds token embeddings and positional encodings, the TP-Transformer uses a **tensor product representation (TPR)**. It multiplies a token embedding (representing the "what") with a role vector (representing the "where"), creating a richer representation of each token’s content and its position or role in the sequence.
@@ -78,11 +72,12 @@ the Transformer model was trained on the dataset, initially the plan was to use 
    * The TP-Transformer is inspired by **<a href = "https://arxiv.org/pdf/1910.06611" style = "color:blue"> Enhancing the Transformer With Explicit Relational
 Encoding for Math Problem Solving </a>** 
 
-  ### Integration of KAN Layer (Kolmogorov Arnold Networks)
+  ### Integration of SineKAN Layer (Sinusoidal Kolmogorov Arnold Networks)
 
   * This has been observed that, KAN Layer are proficient at Symbolic Tasks, and also at capturing the non-linear and complex patterns in the data. 
+  * However due to the complexity and computational cost asscoiated it KAN, there are multiple alternative of KAN that promises better results than KAN, one such implementation is SineKAN
 
-  * This Motivated me to integrate it in the architecture, the last Softmax layer from the Transformer was replaced by the KAN Layer.
+  * This Motivated me to integrate it in the architecture, the last Softmax layer from the Transformer was replaced by the SineKAN Layer.
 
   * This helped the model to generate and understand the rule-based sequences 
 
@@ -113,36 +108,4 @@ Encoding for Math Problem Solving </a>**
 
       *  Overall The Memory Requirements of Tp-Transformer is More compared to Standard Transformer, but this is often considered as a **Trade-off** between the **Memory and the Performance** 
 
-## Project Status : (Still in Developemt)
-
-
-So this expression eventually gets tokenized like this 
-
-# Ritesh's Tokenizer 
-
-Expr: 1/9*i*e^2*gamma_{+\INDEX_0,INDEX_1,INDEX_2}*gamma_{\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)
-
-Tokens: ['1', '/', '9', '*', 'i', '*', 'e', '^', '2', '*', 'gamma_{', '+', '\\', 'INDEX_0', ',', 'INDEX_1', ',', 'INDEX_2', '}', '*', 'gamma_{', '\\', 'INDEX_0', ',', 'INDEX_3', ',', 'INDEX_4', '}', '*', 'b_{', 'MOMENTUM_0', ',', 'INDEX_4', '}', '(', 'MOMENTUM_3', ')', '_v', '*', 'b_{', 'MOMENTUM_1', ',', 'INDEX_3', '}', '(', 'MOMENTUM_4', ')', '_u', '^', 'CONJ', '*', 'c_{', 'MOMENTUM_2', ',', 'INDEX_2', '}', '(', 'MOMENTUM_1', ')', '_u', '*', 'c_{', 'MOMENTUM_3', ',', 'INDEX_1', '}', '(', 'MOMENTUM_2', ')', '_v', '^', 'CONJ', '/', '(', 'm_c', '^', '2', '+', 'MOMENTUM_12', '+', '1', '/', '2', '*', 'reg_prop', ')']
-
-
-
-Expression: 1/81*e^4*(16*m_b^2*m_c^2 + 8*m_b^2*s_12 + 8*s_14*s_23 + 8*s_13*s_24 + 8*m_c^2*s_34)*(m_c^2 + s_12 + 1/2*reg_prop)^(-2)
-
-Tokens: ['1', '/', '81', '*', 'e', '^', '4', '*', '(', '16', '*', 'm_b', '^', '2', '*', 'm_c', '^', '2', '+', '8', '*', 'm_b', '^', '2', '*', 'MOMENTUM_12', '+', '8', '*', 'MOMENTUM_14', '*', 'MOMENTUM_23', '+', '8', '*', 'MOMENTUM_13', '*', 'MOMENTUM_24', '+', '8', '*', 'm_c', '^', '2', '*', 'MOMENTUM_34', ')', '*', '(', 'm_c', '^', '2', '+', 'MOMENTUM_12', '+', '1', '/', '2', '*', 'reg_prop', ')', '^', '(', '-', '2', ')']
-
-
-# AST Based Tokenizer capturing field and gamma terms as a single token  
-
-
-Expr: 1/9*i*e^2*gamma_{+\INDEX_0,INDEX_1,INDEX_2}*gamma_{\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)
-
-
-Tokens: ['1', '/', '9', '*', 'I_UNIT', '*', 'e', '^', '2', '*', 'gamma_{+\\INDEX_0,INDEX_1,INDEX_2}', '*', 'gamma_{\\INDEX_0,INDEX_3,INDEX_4}', '*', 'b_{MOMENTUM_0,INDEX_4}', '(', 'P_3', ')', '_v', '*', 'b_{MOMENTUM_1,INDEX_3}', '(', 'P_4', ')', '_u', '^', 'CONJ', '*', 'c_{MOMENTUM_2,INDEX_2}', '(', 'P_1', ')', '_u', '*', 'c_{MOMENTUM_3,INDEX_1}', '(', 'P_2', ')', '_v', '^', 'CONJ', '/', '(', 'm_c', '^', '2', '+', 'MANDELSTAM_12', '+', '1', '/', '2', '*', 'REG_PROP', ')']
-
-
-# AST Based Tokenizer breaking down gamma and field terms seperately 
-
-
-Expr: 1/9*i*e^2*gamma_{+\INDEX_0,INDEX_1,INDEX_2}*gamma_{\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)
-
-Tokens: ['1', '/', '9', '*', 'I_UNIT', '*', 'E_CHARGE', '^', '2', '*', 'gamma_', '{', '+', '\\', 'INDEX_0', ',', 'INDEX_1', ',', 'INDEX_2', '}', '*', 'gamma_', '{', '\\', 'INDEX_0', ',', 'INDEX_3', ',', 'INDEX_4', '}', '*', 'b_', '{', 'MOMENTUM_0', ',', 'INDEX_4', '}', '(', 'P_3', ')', '_', 'v', '*', 'b_', '{', 'MOMENTUM_1', ',', 'INDEX_3', '}', '(', 'P_4', ')', '_', 'u', '^', 'CONJ', '*', 'c_', '{', 'MOMENTUM_2', ',', 'INDEX_2', '}', '(', 'P_1', ')', '_', 'u', '*', 'c_', '{', 'MOMENTUM_3', ',', 'INDEX_1', '}', '(', 'P_2', ')', '_', 'v', '^', 'CONJ', '/', '(', 'MASS_c', '^', '2', '+', 'MANDELSTAM_12', '+', '1', '/', '2', '*', 'reg_prop', ')']
+## Project Status : (Under Development)

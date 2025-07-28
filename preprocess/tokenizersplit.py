@@ -1,12 +1,12 @@
+from typing import List, Set, Optional, Tuple
+from collections import OrderedDict
+from functools import lru_cache
+from tqdm import tqdm
 import pandas as pd
 import sympy as sp
-from collections import OrderedDict
-import re
-from tqdm import tqdm
-from functools import lru_cache
 import warnings
 import json
-from typing import List, Set, Optional, Tuple
+import re
 
 class SymbolicQEDTokenizer:
     def __init__(self, df: Optional[pd.DataFrame] = None, 
@@ -313,7 +313,7 @@ def main():
     )
 
     src_expr = "1/9*i*e^2*gamma_{+\\INDEX_0,INDEX_1,INDEX_2}*gamma_{\\INDEX_0,INDEX_3,INDEX_4}*b_{MOMENTUM_0,INDEX_4}(p_3)_v*b_{MOMENTUM_1,INDEX_3}(p_4)_u^(*)*c_{MOMENTUM_2,INDEX_2}(p_1)_u*c_{MOMENTUM_3,INDEX_1}(p_2)_v^(*)/(m_c^2+s_12+1/2*reg_prop)"
-    tgt_expr = "1/81*e^4*(16*m_b^2*m_c^2 + 8*m_b^2*s_12 + 8*s_14*s_23 + 8*s_13*s_24 + 8*m_c^2*s_34)*(m_c^2 + s_12 + 1/2*reg_prop)^(-2)"
+    tgt_expr = "1/81*e^4*(16*m_b^2*m_c^2 + 8*m_b^2*s_12 + 8*s_14*s_23 + - 8*s_13*s_24 + 8*m_c^2*s_34)*(m_c^2 + s_12 + 1/2*reg_prop)^(-2)"
     
     print("\n=== Testing Source Expression ===")
     src_tokens = tokenizer.src_tokenize(src_expr)
