@@ -10,7 +10,7 @@ This design significantly improves the Transformer’s ability to handle **symbo
 
 ---
 
-### 🔹 How SineKAN-MoE Works
+###  How SineKAN-MoE Works
 1. Input tokens → Transformer embedding + Multi-Head Attention.  
 2. Instead of a single FFN, tokens go to **N SineKAN experts**.  
 3. A **routing matrix (gating network)** decides which expert(s) each token should use.  
@@ -25,3 +25,10 @@ This approach allows the model to:
 ---
 
 ![src/SineKAN_MoE/sinekanmoe-architecture.png](https://github.com/Ayushmishra05/SymKAN-TP-Transformer/blob/4643dbd5a7fc87f98b7939e3735473062479dd57/src/SineKAN_MoE/sinekanmoe-architecture.png)
+
+
+### Ways to Use 
+
+1. Run the train.py file under the SineKAN-MoE directory.
+2. Parameters can be updated in the config.py file
+
