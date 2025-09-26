@@ -1,6 +1,9 @@
-# SymKAN-TP-Transformer (Tensor-Product Transformer combined with SineKAN and Sympy)
+This Repository is part of SYMBA Project under GSoC 2025 Program, This Repository contains Implementations of two architectures
+1. SymKAN-TP-Transformer
+2. SineKAN-MoE
 
-This Repository is part of SYMBA Project under GSoC 2025 Program
+Find the Implementation of SineKAN-MoE in the `./src` directory or directly click this link **<a href = "https://github.com/Ayushmishra05/SymKAN-TP-Transformer/tree/main/src/SineKAN_MoE" style = "color:blue"> SineKAN-MoE </a>** 
+# SymKAN-TP-Transformer (Tensor-Product Transformer combined with SineKAN)
 
 ## Project Structure 
 ```
