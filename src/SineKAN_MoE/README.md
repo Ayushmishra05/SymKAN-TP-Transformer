@@ -24,4 +24,4 @@ This approach allows the model to:
 
 ---
 
-![SineKAN-MoE Architecture]("src/SineKAN_MoE/sinekanmoe-architecture (1).png")
+![SineKAN-MoE Architecture]("src/SineKAN_MoE/sinekanmoe-architecture%20(1).png")
