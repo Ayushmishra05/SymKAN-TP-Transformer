@@ -24,4 +24,4 @@ This approach allows the model to:
 
 ---
 
-![SineKAN-MoE Architecture](src/SineKAN_MoE/sinekanmoe-architecture.png)
+![src/SineKAN_MoE/sinekanmoe-architecture.png](https://github.com/Ayushmishra05/SymKAN-TP-Transformer/blob/4643dbd5a7fc87f98b7939e3735473062479dd57/src/SineKAN_MoE/sinekanmoe-architecture.png)
